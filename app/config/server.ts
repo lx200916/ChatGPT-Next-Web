@@ -65,8 +65,8 @@ export const getServerSideConfig = () => {
   }
 
   const disableGPT4 = !!process.env.DISABLE_GPT4;
-  let customModels = process.env.CUSTOM_MODELS ?? "chatglm3-6b";
-  let defaultModel = process.env.DEFAULT_MODEL ?? "chatglm3-6b";
+  let customModels = process.env.CUSTOM_MODELS ?? "";
+  let defaultModel = process.env.DEFAULT_MODEL ?? "";
   let enableInjectSystemPrompts: boolean = process.env.SYSTEM_PROMPT
     ? true
     : false;

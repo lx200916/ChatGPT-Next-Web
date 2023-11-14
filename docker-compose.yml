@@ -3,7 +3,7 @@ services:
   chatgpt-next-web:
     profiles: ["no-proxy"]
     container_name: chatgpt-next-web
-    image: yidadaa/chatgpt-next-web
+    image: gpt
     ports:
       - 3000:3000
     environment:
@@ -16,21 +16,26 @@ services:
       - ENABLE_BALANCE_QUERY=$ENABLE_BALANCE_QUERY
       - DISABLE_FAST_LINK=$DISABLE_FAST_LINK
       - OPENAI_SB=$OPENAI_SB
+      - CUSTOM_MODELS="chatglm3-6b"
+      - DEFAULT_MODEL="chatglm3-6b"
+      - LOGO_TITLE="ChatGPT-Next_"
+      - LOGO_SUBTITLE="Powered by GPT-3"
+      
 
-  chatgpt-next-web-proxy:
-    profiles: ["proxy"]
-    container_name: chatgpt-next-web-proxy
-    image: yidadaa/chatgpt-next-web
-    ports:
-      - 3000:3000
-    environment:
-      - OPENAI_API_KEY=$OPENAI_API_KEY
-      - CODE=$CODE
-      - PROXY_URL=$PROXY_URL
-      - BASE_URL=$BASE_URL
-      - OPENAI_ORG_ID=$OPENAI_ORG_ID
-      - HIDE_USER_API_KEY=$HIDE_USER_API_KEY
-      - DISABLE_GPT4=$DISABLE_GPT4
-      - ENABLE_BALANCE_QUERY=$ENABLE_BALANCE_QUERY
-      - DISABLE_FAST_LINK=$DISABLE_FAST_LINK
-      - OPENAI_SB=$OPENAI_SB
+  # chatgpt-next-web-proxy:
+  #   profiles: ["proxy"]
+  #   container_name: chatgpt-next-web-proxy
+  #   image: yidadaa/chatgpt-next-web
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     - OPENAI_API_KEY=$OPENAI_API_KEY
+  #     - CODE=$CODE
+  #     - PROXY_URL=$PROXY_URL
+  #     - BASE_URL=$BASE_URL
+  #     - OPENAI_ORG_ID=$OPENAI_ORG_ID
+  #     - HIDE_USER_API_KEY=$HIDE_USER_API_KEY
+  #     - DISABLE_GPT4=$DISABLE_GPT4
+  #     - ENABLE_BALANCE_QUERY=$ENABLE_BALANCE_QUERY
+  #     - DISABLE_FAST_LINK=$DISABLE_FAST_LINK
+  #     - OPENAI_SB=$OPENAI_SB
