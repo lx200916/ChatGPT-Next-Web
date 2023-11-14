@@ -24,6 +24,7 @@ export type ChatMessage = RequestMessage & {
   isError?: boolean;
   id: string;
   model?: ModelType;
+  referenceMessagesId?: string[];
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -52,7 +53,7 @@ export interface ChatSession {
   lastUpdate: number;
   lastSummarizeIndex: number;
   clearContextIndex?: number;
-
+  currentRefMessageIds?: string[];
   mask: Mask;
 }
 
@@ -75,6 +76,7 @@ function createEmptySession(): ChatSession {
     },
     lastUpdate: Date.now(),
     lastSummarizeIndex: 0,
+    currentRefMessageIds: [],
 
     mask: createEmptyMask(),
   };
@@ -120,7 +122,17 @@ const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
 };
+// const
+const getRefMessagesFromIds = (ids: string[], session: ChatSession) => {
+  const allRefMessages = session.messages.filter((m) => ids.includes(m.id));
+  const allMessages = session.messages;
 
+  const refMessagesIds = allRefMessages
+    .map((m) => m.referenceMessagesId ?? [])
+    .flat();
+  ids.concat(refMessagesIds);
+  return allMessages.filter((m) => ids.includes(m.id));
+};
 export const useChatStore = createPersistStore(
   DEFAULT_CHAT_STATE,
   (set, _get) => {
@@ -285,7 +297,15 @@ export const useChatStore = createPersistStore(
         });
 
         // get recent messages
-        const recentMessages = get().getMessagesWithMemory();
+        let recentMessages = get().getMessagesWithMemory();
+        const currentRefMessageIds = session.currentRefMessageIds ?? [];
+        if (session.currentRefMessageIds?.length) {
+          recentMessages = recentMessages.concat(
+            getRefMessagesFromIds(currentRefMessageIds, session),
+          );
+          botMessage.referenceMessagesId = currentRefMessageIds;
+          userMessage.referenceMessagesId = currentRefMessageIds;
+        }
         const sendMessages = recentMessages.concat(userMessage);
         const messageIndex = get().currentSession().messages.length + 1;
 
@@ -299,6 +319,7 @@ export const useChatStore = createPersistStore(
             savedUserMessage,
             botMessage,
           ]);
+          session.currentRefMessageIds = [];
         });
 
         // make request
