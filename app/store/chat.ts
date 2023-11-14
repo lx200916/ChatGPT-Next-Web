@@ -122,13 +122,26 @@ const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
 };
-// const
+const recursivelyGetRefMessages = (
+  message: ChatMessage,
+  allMessages: ChatMessage[],
+): string[] => {
+  if (!message.referenceMessagesId?.length) return [];
+  const refMessages = allMessages.filter(
+    (m) => message.referenceMessagesId?.includes(m.id),
+  );
+
+  return [
+    message.id,
+    ...refMessages.map((m) => recursivelyGetRefMessages(m, allMessages)).flat(),
+  ];
+};
 const getRefMessagesFromIds = (ids: string[], session: ChatSession) => {
   const allRefMessages = session.messages.filter((m) => ids.includes(m.id));
   const allMessages = session.messages;
 
   const refMessagesIds = allRefMessages
-    .map((m) => m.referenceMessagesId ?? [])
+    .map((m) => recursivelyGetRefMessages(m, allMessages))
     .flat();
   ids.concat(refMessagesIds);
   return allMessages.filter((m) => ids.includes(m.id));
