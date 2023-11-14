@@ -21,6 +21,20 @@ declare global {
       ENABLE_BALANCE_QUERY?: string; // allow user to query balance or not
       DISABLE_FAST_LINK?: string; // disallow parse settings from url or not
       CUSTOM_MODELS?: string; // to control custom models
+      SYSTEM_PROMPT?: string;
+      DEFAULT_MODEL?: string;
+      // enableAutoGenerateTitle
+      AUTO_GENERATE_TITLE?: string;
+      SEND_PREVIOUS_BUBBLE?: string;
+      DONT_SHOW_MASK_SPLASH_SCREEN?: string;
+      HIDE_BUILTIN_MASKS?: string;
+      HISTORY_MESSAGE_COUNT?: string;
+      SEND_MEMORY?: string;
+
+      //Logo Customization
+      LOGO_URL?: string;
+      LOGO_TITLE?: string;
+      LOGO_SUBTITLE?: string;
 
       // azure only
       AZURE_URL?: string; // https://{azure-url}/openai/deployments/{deploy-name}
@@ -51,14 +65,36 @@ export const getServerSideConfig = () => {
   }
 
   const disableGPT4 = !!process.env.DISABLE_GPT4;
-  let customModels = process.env.CUSTOM_MODELS ?? "";
-
+  let customModels = process.env.CUSTOM_MODELS ?? "chatglm3-6b";
+  let defaultModel = process.env.DEFAULT_MODEL ?? "chatglm3-6b";
+  let enableInjectSystemPrompts: boolean = process.env.SYSTEM_PROMPT
+    ? true
+    : false;
   if (disableGPT4) {
     if (customModels) customModels += ",";
     customModels += DEFAULT_MODELS.filter((m) => m.name.startsWith("gpt-4"))
       .map((m) => "-" + m.name)
       .join(",");
+    if (defaultModel == "gpt-4") defaultModel = "";
   }
+  const defaultConfigMap = {
+    enableAutoGenerateTitle: !!process.env.AUTO_GENERATE_TITLE,
+    sendPreviousBubble: !!process.env.SEND_PREVIOUS_BUBBLE,
+    dontShowMaskSplashScreen: !!process.env.DONT_SHOW_MASK_SPLASH_SCREEN,
+    hideBuiltinMasks: !!process.env.HIDE_BUILTIN_MASKS,
+    modelConfig: {
+      model: defaultModel,
+      enableInjectSystemPrompts: enableInjectSystemPrompts,
+      sendMemory: !!process.env.SEND_MEMORY,
+      historyMessageCount: parseInt(process.env.HISTORY_MESSAGE_COUNT ?? "0"),
+    },
+    logo: {
+      url: process.env.LOGO_URL ?? "",
+      title: process.env.LOGO_TITLE ?? "My Chatbot",
+      subtitle: process.env.LOGO_SUBTITLE ?? "",
+      showLogo: !!process.env.LOGO_URL,
+    },
+  };
 
   const isAzure = !!process.env.AZURE_URL;
 
@@ -84,5 +120,7 @@ export const getServerSideConfig = () => {
     hideBalanceQuery: !process.env.ENABLE_BALANCE_QUERY,
     disableFastLink: !!process.env.DISABLE_FAST_LINK,
     customModels,
+    defaultModel,
+    defaultConfigMap,
   };
 };

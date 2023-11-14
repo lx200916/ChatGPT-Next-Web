@@ -28,7 +28,7 @@ export interface OpenAIListModelResponse {
 }
 
 export class ChatGPTApi implements LLMApi {
-  private disableListModels = true;
+  private disableListModels = false;
 
   path(path: string): string {
     const accessStore = useAccessStore.getState();
@@ -282,18 +282,21 @@ export class ChatGPTApi implements LLMApi {
     if (this.disableListModels) {
       return DEFAULT_MODELS.slice();
     }
+    let chatModels: any[] = [];
+    try {
+      const res = await fetch(this.path(OpenaiPath.ListModelPath), {
+        method: "GET",
+        headers: {
+          ...getHeaders(),
+        },
+      });
 
-    const res = await fetch(this.path(OpenaiPath.ListModelPath), {
-      method: "GET",
-      headers: {
-        ...getHeaders(),
-      },
-    });
-
-    const resJson = (await res.json()) as OpenAIListModelResponse;
-    const chatModels = resJson.data?.filter((m) => m.id.startsWith("gpt-"));
-    console.log("[Models]", chatModels);
-
+      const resJson = (await res.json()) as OpenAIListModelResponse;
+      chatModels = resJson.data?.filter((m) => m.id.startsWith("gpt-"));
+      console.log("[Models]", chatModels);
+    } catch (e) {
+      console.error("[Models] Fetch Error:", e);
+    }
     if (!chatModels) {
       return [];
     }

@@ -27,7 +27,7 @@ import { SideBar } from "./sidebar";
 import { useAppConfig } from "../store/config";
 import { AuthPage } from "./auth";
 import { getClientConfig } from "../config/client";
-import { api } from "../client/api";
+import { api, getHeaders } from "../client/api";
 import { useAccessStore } from "../store";
 
 export function Loading(props: { noLogo?: boolean }) {
@@ -128,7 +128,8 @@ function Screen() {
   const isHome = location.pathname === Path.Home;
   const isAuth = location.pathname === Path.Auth;
   const isMobileScreen = useMobileScreen();
-  const shouldTightBorder = getClientConfig()?.isApp || (config.tightBorder && !isMobileScreen);
+  const shouldTightBorder =
+    getClientConfig()?.isApp || (config.tightBorder && !isMobileScreen);
 
   useEffect(() => {
     loadAsyncGoogleFont();
@@ -187,7 +188,40 @@ export function Home() {
     console.log("[Config] got config from build time", getClientConfig());
     useAccessStore.getState().fetch();
   }, []);
+  const appConfig = useAppConfig();
+  useEffect(() => {
+    (async () => {
+      const config = await fetch("/api/config", {
+        method: "post",
+        body: null,
+        headers: { ...getHeaders() },
+      });
+      const json = (await config.json()).defaultConfigMap;
+      const logoInfo = json.logo;
+      if (logoInfo) {
+        appConfig.update((config) => {
+          config.logo = logoInfo;
+        });
+      }
+      if (appConfig.__defaultConfig) {
+        return;
+      }
+      appConfig.update((config) => {
+        let config_ = config as any;
+        // Merge Config with nested fields
+        Object.keys(json).forEach((key) => {
+          if (typeof json[key] === "object") {
+            config_[key] = { ...config_[key], ...json[key] };
+          } else {
+            config_[key] = json[key];
+          }
+        });
+        config.__defaultConfig = json;
+      });
 
+      console.log("[Config] got config from server", json);
+    })();
+  }, []);
   if (!useHasHydrated()) {
     return <Loading />;
   }

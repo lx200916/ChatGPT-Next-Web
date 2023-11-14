@@ -58,6 +58,12 @@ export const DEFAULT_CONFIG = {
     enableInjectSystemPrompts: true,
     template: DEFAULT_INPUT_TEMPLATE,
   },
+  logo: {
+    url: "",
+    title: "",
+    subtitle: "",
+  },
+  __defaultConfig: null as any,
 };
 
 export type ChatConfig = typeof DEFAULT_CONFIG;
@@ -102,7 +108,7 @@ export const useAppConfig = createPersistStore(
   { ...DEFAULT_CONFIG },
   (set, get) => ({
     reset() {
-      set(() => ({ ...DEFAULT_CONFIG }));
+      set(() => ({ ...(get().__defaultConfig ?? DEFAULT_CONFIG) }));
     },
 
     mergeModels(newModels: LLMModel[]) {

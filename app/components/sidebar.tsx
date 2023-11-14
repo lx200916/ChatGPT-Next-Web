@@ -153,17 +153,24 @@ export function SideBar(props: { className?: string }) {
         transition: isMobileScreen && isIOSMobile ? "none" : undefined,
       }}
     >
-      <div className={styles["sidebar-header"]} data-tauri-drag-region>
-        <div className={styles["sidebar-title"]} data-tauri-drag-region>
-          ChatGPT Next
+      {(!!config.logo.url || !!config.logo.title) && (
+        <div className={styles["sidebar-header"]} data-tauri-drag-region>
+          <div className={styles["sidebar-title"]} data-tauri-drag-region>
+            {config.logo.title ?? "ChatGPT"}
+          </div>
+          <div className={styles["sidebar-sub-title"]}>
+            {config.logo.subtitle ?? "ChatGPT"}
+          </div>
+          <div className={styles["sidebar-logo"] + " no-dark"}>
+            {/* <ChatGptIcon /> */}
+            {config.logo.url ? (
+              <img src={config.logo.url} alt="logo" />
+            ) : (
+              <ChatGptIcon />
+            )}
+          </div>
         </div>
-        <div className={styles["sidebar-sub-title"]}>
-          Build your own AI assistant.
-        </div>
-        <div className={styles["sidebar-logo"] + " no-dark"}>
-          <ChatGptIcon />
-        </div>
-      </div>
+      )}
 
       <div className={styles["sidebar-header-bar"]}>
         <IconButton
