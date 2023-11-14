@@ -27,7 +27,8 @@ import PinIcon from "../icons/pin.svg";
 import EditIcon from "../icons/rename.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
-
+import QuoteIcon from "../icons/quote.svg";
+import OkIcon from "../icons/ok.svg";
 import LightIcon from "../icons/light.svg";
 import DarkIcon from "../icons/dark.svg";
 import AutoIcon from "../icons/auto.svg";
@@ -46,6 +47,7 @@ import {
   useAppConfig,
   DEFAULT_TOPIC,
   ModelType,
+  ChatSession,
 } from "../store";
 
 import {
@@ -330,9 +332,11 @@ function ChatAction(props: {
   text: string;
   icon: JSX.Element;
   onClick: () => void;
+  className?: string;
 }) {
   const iconRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const className = props.className ? " " + props.className : "";
   const [width, setWidth] = useState({
     full: 16,
     icon: 16,
@@ -351,7 +355,7 @@ function ChatAction(props: {
 
   return (
     <div
-      className={`${styles["chat-input-action"]} clickable`}
+      className={`${styles["chat-input-action"]} clickable` + className}
       onClick={() => {
         props.onClick();
         setTimeout(updateWidth, 1);
@@ -871,6 +875,44 @@ function _Chat() {
     });
   };
 
+  const getRoundMessages = (measureId: string, session: ChatSession) => {
+    const messages = session.messages;
+    const roundMessages: string[] = [];
+    let flag = false;
+    messages.toReversed().forEach((message) => {
+      // Take the message between the current message and the previous messages after Assistant response.
+      if (message.role === "assistant" || message.role === "system") {
+        flag = false;
+      }
+      if (message.id === measureId) {
+        flag = true;
+      }
+      if (flag) {
+        roundMessages.push(message.id);
+      }
+    });
+    return roundMessages.toReversed();
+  };
+  const onRefMessage = (message: ChatMessage) => {
+    chatStore.updateCurrentSession((session) => {
+      if (!session.currentRefMessageIds) {
+        session.currentRefMessageIds = [];
+      }
+      const roundMessages = getRoundMessages(message.id, session);
+
+      if (session.currentRefMessageIds.includes(message.id)) {
+        session.currentRefMessageIds = session.currentRefMessageIds.filter(
+          (id) => id !== message.id,
+        );
+      } else {
+        session.currentRefMessageIds = [
+          ...session.currentRefMessageIds,
+          ...roundMessages,
+        ];
+      }
+    });
+  };
+
   const context: RenderMessage[] = useMemo(() => {
     return session.mask.hideContext ? [] : session.mask.context.slice();
   }, [session.mask.context, session.mask.hideContext]);
@@ -1185,6 +1227,17 @@ function _Chat() {
                           )}
                         </>
                       )}
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: "-8px",
+                          bottom: "-8px",
+                        }}
+                      >
+                        {session.currentRefMessageIds?.includes(message.id) && (
+                          <OkIcon />
+                        )}
+                      </div>
                     </div>
 
                     {showActions && (
@@ -1219,6 +1272,18 @@ function _Chat() {
                                 text={Locale.Chat.Actions.Copy}
                                 icon={<CopyIcon />}
                                 onClick={() => copyToClipboard(message.content)}
+                              />
+                              <ChatAction
+                                text={Locale.Chat.Actions.Ref}
+                                icon={<QuoteIcon />}
+                                className={
+                                  session.currentRefMessageIds?.includes(
+                                    message.id,
+                                  )
+                                    ? "active"
+                                    : undefined
+                                }
+                                onClick={() => onRefMessage(message)}
                               />
                             </>
                           )}
